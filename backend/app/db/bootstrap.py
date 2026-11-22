@@ -14,6 +14,8 @@ def initialize_local_database(engine):
     }
 
     with engine.begin() as connection:
+        # Ensure table renames also update foreign keys on SQLite builds with legacy defaults.
+        connection.exec_driver_sql('PRAGMA legacy_alter_table=OFF')
         connection.exec_driver_sql('BEGIN IMMEDIATE')
         tables = set(inspect(connection).get_table_names())
         for old_name, new_name in legacy_names.items():
