@@ -70,7 +70,9 @@ def test_habits_persist_in_database_and_are_scoped_to_authenticated_user():
     saved = client.put('/api/v1/habits', json=habit, headers=owner_headers)
     assert saved.status_code == 200
     assert saved.json()['streakHistory'] == habit['streakHistory']
-    assert client.get('/api/v1/habits', headers=owner_headers).json() == [habit]
+    assert client.get('/api/v1/habits', headers=owner_headers).json() == [
+        {**habit, 'startAt': '2026-10-04T00:00:00', 'firstStartDate': '2026-09-01'},
+    ]
     assert client.get('/api/v1/habits', headers=other_headers).json() == []
     assert client.get('/api/v1/habits').status_code == 401
 

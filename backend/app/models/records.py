@@ -1,15 +1,16 @@
 from sqlalchemy import BigInteger, Column, ForeignKey, Integer, JSON, String, UniqueConstraint
 
 from app.db.session import Base
+from app.models.user import User
 
 
 class HabitRecord(Base):
-    __tablename__ = 'habits'
+    __tablename__ = 'habit_sober'
     __table_args__ = (UniqueConstraint('user_id', 'record_id', name='uq_habit_user_record'),)
 
     id = Column(Integer, primary_key=True)
     record_id = Column(BigInteger, nullable=False)
-    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey(User.id, ondelete='CASCADE'), nullable=False, index=True)
     name = Column(String(160), nullable=False)
     title = Column(String(160), nullable=False)
     description = Column(String, nullable=False)
@@ -24,12 +25,12 @@ class HabitRecord(Base):
 
 
 class JournalRecord(Base):
-    __tablename__ = 'journal_entries'
+    __tablename__ = 'journal_entry_sober'
     __table_args__ = (UniqueConstraint('user_id', 'record_id', name='uq_journal_user_record'),)
 
     id = Column(Integer, primary_key=True)
     record_id = Column(BigInteger, nullable=False)
-    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey(User.id, ondelete='CASCADE'), nullable=False, index=True)
     date = Column(String(10), nullable=False)
     mood = Column(String(80), nullable=False)
     note = Column(String, nullable=False)
@@ -39,12 +40,12 @@ class JournalRecord(Base):
 
 
 class UrgeRecord(Base):
-    __tablename__ = 'urge_logs'
+    __tablename__ = 'urge_log_sober'
     __table_args__ = (UniqueConstraint('user_id', 'record_id', name='uq_urge_user_record'),)
 
     id = Column(Integer, primary_key=True)
     record_id = Column(BigInteger, nullable=False)
-    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey(User.id, ondelete='CASCADE'), nullable=False, index=True)
     time = Column(String(40), nullable=False)
     trigger = Column(String, nullable=False)
     intensity = Column(Integer, nullable=False)

@@ -1,28 +1,21 @@
 from datetime import datetime, timezone
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from sqlalchemy import inspect, text
+from sqlalchemy import select
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.api.v1 import auth, community, dashboard, records, statistics
 from app.core.config import get_settings
-from app.db.session import Base, engine
-from app.models.user import User  # noqa: F401
-from app.models.records import HabitRecord, JournalRecord, UrgeRecord  # noqa: F401
+from app.db.bootstrap import initialize_local_database
+from app.db.session import engine
+from app.models.user import User
 from app.schemas.common import StatusResponse
 
 settings = get_settings()
 
-Base.metadata.create_all(bind=engine)
-
-# create_all does not add columns to an existing database; add this nullable
-# field in place so existing Render/Supabase data keeps working during rollout.
-with engine.begin() as connection:
-    columns = {column['name'] for column in inspect(connection).get_columns('habits')}
-    if 'first_start_date' not in columns:
-        connection.execute(text('ALTER TABLE habits ADD COLUMN first_start_date VARCHAR(10)'))
-    if 'start_at' not in columns:
-        connection.execute(text('ALTER TABLE habits ADD COLUMN start_at VARCHAR(40)'))
+if engine.dialect.name == 'sqlite':
+    initialize_local_database(engine)
 
 app = FastAPI(title='Sober Free Web API', version='0.1.0')
 
@@ -46,6 +39,11 @@ app.include_router(community.router, prefix='/api/v1')
 
 @app.get('/health', response_model=StatusResponse)
 def health_check():
+    try:
+        with engine.connect() as connection:
+            connection.execute(select(User.id).limit(1))
+    except SQLAlchemyError:
+        raise HTTPException(status_code=503, detail='Database unavailable') from None
     return {'status': 'ok', 'timestamp': datetime.now(timezone.utc).isoformat(), 'app': 'Sober Free Web', 'data': {'environment': settings.app_env}}
 
 
